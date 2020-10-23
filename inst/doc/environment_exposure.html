@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Bing Zhang" />
+
+<meta name="date" content="2020-10-15" />
+
+<title>Air pollutant exposure estimation based on the home address</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Air pollutant exposure estimation based on the home address</h1>
+<h4 class="author">Bing Zhang</h4>
+<h4 class="date">2020-10-15</h4>
+
+
+
+<p>It is crucial to assess the indivudal exposure of environmental factors at different exposure periods (i.e, progestation and second trimester), so as to accurately assess how the air pollutant exposure work on the certain outcomes (i.e, birth defect and preterm labor). Compared with the traditional way which only uses the average concnetration among the whole monitoring sites, the <code>EnvExpInd</code> package taken the <strong>spatial heterogeneity</strong> into consideration and obtained a more accurate assessment of environmental exposure.</p>
+<hr />
+<div id="dataset" class="section level3">
+<h3>Dataset</h3>
+<p>Generally, three datasets including the concentration of environmental factors at each time point, individual information and the environmental monitoring sites should be prepared. Here, we take a simple example to illustrate how we can use the <strong>EnvExpInd</strong> packageto estimate the individual exposure of air pollutants.</p>
+<ul>
+<li><strong>monitoring site</strong>: data.frame, contains the names of monitoring sites and their corresponding address.</li>
+<li><strong>air pollution data</strong>: the concentration of environmental factors at each time point.</li>
+<li><strong>individual information</strong>: detailed information of address and the start time to be estimated.</li>
+</ul>
+<hr />
+</div>
+<div id="procedure" class="section level3">
+<h3>Procedure</h3>
+<ol style="list-style-type: decimal">
+<li>Obtain the longitude and latitude information for each individual as well as the monitoring sites according to their detailed address.</li>
+<li>Calculate the matched monitoring site (nearest monitoring site used as the matched site) or the corresponding spatial position after the interpolation.</li>
+<li>Based on the the time point of outcome and the assessment period, we can easily get the individual exposure in the targte period by re-running the second step.</li>
+</ol>
+<hr />
+</div>
+<div id="install" class="section level3">
+<h3>Install</h3>
+<p>The package hasn’t been published in R-Project，whereas, you can install it from the github (Spatial-R):</p>
+<pre><code>devtools::install_github(&quot;Spatial-R/EnvExpInd&quot;)</code></pre>
+<hr />
+<div id="load-the-dataset" class="section level4">
+<h4>Load the dataset</h4>
+<p>After you have installed the <strong>EnvExpInd</strong> package, you can load the “envid” dataset in the package using the following codes: <code>data(&quot;envind)</code>. The envid dataset contains the information about the air pollutants, montoring site and the detailed information for each patient. In order to omit the potential error in the following procedure, you should make sure that the variables regarding date information in the air pollutants and patient dataset should be formated as “date/time”.</p>
+<pre><code> library(sp);
+ library(gstat);
+ library(EnvExpInd)
+ data(&quot;envind&quot;)
+ individual_data_tem$date &lt;- as.Date(individual_data_tem$date);
+ pollutant_data$date &lt;- as.Date(pollutant_data$date)
+ pollutant_data_tem &lt;- pollutant_data</code></pre>
+<p>The <strong>individual_data_tem</strong> contains at least three variables: <strong>id</strong> (unique ID for the each patient), <strong>date</strong> (date of outcome occured, formated as “2014-10-20”) and <strong>address</strong> (detailed address for each individual).</p>
+<p>The <strong>pollutant_data</strong> also contains at least three variables: <strong>date</strong> (date of montoring, formated as “2014-10-20”), <strong>site_name</strong> (the name for the monitoring site) and concentration of certain air pollutants. (<strong>Notes</strong>: There were some missing values in the pullutant dataset, therefore, you should make some interpolations to fill with)</p>
+<p>The <strong>site_data</strong> contains at least two variables: <strong>site_name</strong> (the name for the monitoring site) and <strong>address</strong> (detailed address for the montoring site).</p>
+<hr />
+</div>
+</div>
+<div id="analysis" class="section level3">
+<h3>Analysis</h3>
+<div id="longitude-and-latitude-information" class="section level4">
+<h4>Longitude and latitude information</h4>
+<p>There are several ways to get the longitude and latitude information based on the detailed address: Baidu, Google, and Amap. For the user in China, you can use the API of <a href="http://lbsyun.baidu.com/index.php?title=webapi/guide/webservice-geocoding">Baidu</a> and <a href="https://lbs.amap.com/api/webservice/guide/api/georegeo">Amap</a> to transform the address into the longitude and latitude. Here, we provide a simple function <strong>get_latlon_china</strong> to help the uses to realise the process.<br />
+(Note: Daily call limitation for each api_key was 6000)</p>
+<pre><code>site_data &lt;- get_latlon_china(data = site_data, add_var = &quot;address&quot;, api_key = &quot;your key&quot;)
+individual_data_tem &lt;- get_latlon_china(data = individual_data_tem, add_var = &quot;address&quot;, api_key = &quot;your key&quot;)</code></pre>
+</div>
+<div id="exposure-estimation" class="section level4">
+<h4>Exposure estimation</h4>
+<p>Generally, there were two ways to calculate the environmental exposure on the individual level: simple or complicated. The simple one here is that we choose the air pollutant concentration in the nearest monitoring site as the reference for each individual; however, for the complicated one, we use the spatial interpolation method (i.e, <strong>inverse distance weighted</strong>, <strong>Ordinary kriging</strong>, and <strong>land use regression</strong>) to assess the air pollutant concentration. In the current version of EnvExpInd, there are only two spatial interpolation methods available: inverse distance weighted and kriging.</p>
+<ol style="list-style-type: decimal">
+<li>Simple one</li>
+</ol>
+<p>Two improtant functions can be used to realised this aim: the function <code>get_refrence_id_simple</code> and <code>expoure_estimate_simple</code>. The function <code>get_refrence_id_simple</code> is used to match the nearest monitoring site for each individual. There were eight arugments (four arugments for the individual dataset and four arugments for the monitoring sites) that we should define firstly:</p>
+<ul>
+<li><code>individual_data</code>: dataframe with at least three variables: longitude, latitude and unique id.<br />
+</li>
+<li><code>individual_lat</code>: column name of latitude for each individual.</li>
+<li><code>individual_lon</code>: column name of longitude for each individual.</li>
+<li><code>individual_id</code>: column name of unique id for each individual.</li>
+<li><code>site_data</code>: dataframe with at least three variables: longitude, latitude and unique id.</li>
+<li><code>site_lat</code>: column name of latitude for each monitoring site.</li>
+<li><code>site_lon</code>: column name of longitude for each monitoring site.</li>
+<li><code>site_id</code>: column name of unique id for each monitoring site.</li>
+</ul>
+<p>The codes are as followed:</p>
+<pre><code>individual_data_tem$refrence_id &lt;- get_refrence_id_simple(individual_data = individual_data_tem, 
+                                                      individual_lat = &quot;lat&quot;,
+                                                      individual_lon =&quot;lon&quot;,
+                                                      individual_id = &quot;id&quot;,
+                                                      site_data = site_data,
+                                                      site_lat = &quot;lat&quot;,
+                                                      site_lon = &quot;lon&quot;,
+                                                      site_id = &quot;site&quot;)
+kable(head(individual_data_tem[,-3])) </code></pre>
+<p>After that, we can use the function <code>expoure_estimate_simple</code> to get the exposure during the study period:</p>
+<pre><code>pollutant_data_tem$date &lt;- as.Date(pollutant_data_tem$date)
+individual_data_tem$date &lt;- as.Date(individual_data_tem$date)
+exposure.simple &lt;- expoure_estimate_simple(individual_data = individual_data_tem,
+                                           individual_id = &quot;id&quot;,
+                                           refrence_id = &quot;refrence_id&quot;,
+                                           exposure_date = &quot;date&quot;,
+                                           pollutant_data = pollutant_data_tem,
+                                           pollutant_site = &quot;site.name&quot;,
+                                           pollutant_date = &quot;date&quot;,
+                                           pollutant_name = c(&quot;PM10&quot;,&quot;SO2&quot;),
+                                           estimate_interval = c(0:1))
+
+kable(head(exposure.simple$PM10),digits= 1)   #### PM10 estimation</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">
+id
+</th>
+<th align="left">
+day.0
+</th>
+<th align="left">
+day.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+2564
+</td>
+<td align="left">
+202
+</td>
+<td align="left">
+206
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+2563
+</td>
+<td align="left">
+206
+</td>
+<td align="left">
+220
+</td>
+</tr>
+<tr class="odd">
+<td align="left">
+2562
+</td>
+<td align="left">
+206
+</td>
+<td align="left">
+220
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+2561
+</td>
+<td align="left">
+230
+</td>
+<td align="left">
+200
+</td>
+</tr>
+<tr class="odd">
+<td align="left">
+2560
+</td>
+<td align="left">
+212
+</td>
+<td align="left">
+146
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+2559
+</td>
+<td align="left">
+176
+</td>
+<td align="left">
+136
+</td>
+</tr>
+</tbody>
+</table>
+<pre><code>kable(head(exposure.simple$SO2),digits= 1)    #### SO2 estimation</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">
+id
+</th>
+<th align="left">
+day.0
+</th>
+<th align="left">
+day.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+2564
+</td>
+<td align="left">
+27
+</td>
+<td align="left">
+47
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+2563
+</td>
+<td align="left">
+47
+</td>
+<td align="left">
+60
+</td>
+</tr>
+<tr class="odd">
+<td align="left">
+2562
+</td>
+<td align="left">
+47
+</td>
+<td align="left">
+60
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+2561
+</td>
+<td align="left">
+82
+</td>
+<td align="left">
+52
+</td>
+</tr>
+<tr class="odd">
+<td align="left">
+2560
+</td>
+<td align="left">
+54
+</td>
+<td align="left">
+72
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+2559
+</td>
+<td align="left">
+44
+</td>
+<td align="left">
+52
+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<ol start="2" style="list-style-type: decimal">
+<li>Inverse distance weighted</li>
+</ol>
+<p>The spatial interpolation method can be realised using the <strong>gstat</strong> package. In the EnvExpInd package, we can use <code>exposure_estimate_idw</code> function to estimate the individual level exposure based on the inverse distance weighted method.</p>
+<pre><code>pollutant_data_tem_idw &lt;- merge(pollutant_data_tem,site_data[,c(1,3,4)],by.x = &quot;site.name&quot;,by.y = &quot;site&quot;, all.x = T)
+
+exposure.idw &lt;- exposure_estimate_idw(individual_data = individual_data_tem,
+                                      individual_id = &quot;id&quot;,
+                                      exposure_date =&quot;date&quot;,
+                                      individual_lat =&quot;lat&quot;,
+                                      individual_lon =&quot;lon&quot;,
+                                      pollutant_data = pollutant_data_tem_idw,
+                                      pollutant_date = &quot;date&quot;,
+                                      pollutant_site_lat = &quot;lat&quot;,
+                                      pollutant_site_lon = &quot;lon&quot;,
+                                      pollutant_name = c(&quot;PM10&quot;,&quot;SO2&quot;),
+                                      estimate_interval = c(0:1))  
+
+
+kable(head(exposure.idw$PM10),digits = 1)   #### PM10 estimation</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">
+id
+</th>
+<th align="right">
+day.0
+</th>
+<th align="right">
+day.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">
+2564
+</td>
+<td align="right">
+196.1
+</td>
+<td align="right">
+198.6
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2563
+</td>
+<td align="right">
+220.2
+</td>
+<td align="right">
+198.6
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2562
+</td>
+<td align="right">
+227.0
+</td>
+<td align="right">
+194.7
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2561
+</td>
+<td align="right">
+191.0
+</td>
+<td align="right">
+224.1
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2560
+</td>
+<td align="right">
+141.6
+</td>
+<td align="right">
+186.6
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2559
+</td>
+<td align="right">
+136.1
+</td>
+<td align="right">
+176.1
+</td>
+</tr>
+</tbody>
+</table>
+<pre><code>kable(head(exposure.idw$SO2),digits= 1)   #### SO2 estimation</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">
+id
+</th>
+<th align="right">
+day.0
+</th>
+<th align="right">
+day.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">
+2564
+</td>
+<td align="right">
+52.9
+</td>
+<td align="right">
+33.1
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2563
+</td>
+<td align="right">
+72.1
+</td>
+<td align="right">
+53.0
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2562
+</td>
+<td align="right">
+73.3
+</td>
+<td align="right">
+53.2
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2561
+</td>
+<td align="right">
+50.8
+</td>
+<td align="right">
+81.0
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2560
+</td>
+<td align="right">
+58.7
+</td>
+<td align="right">
+44.5
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2559
+</td>
+<td align="right">
+51.9
+</td>
+<td align="right">
+44.0
+</td>
+</tr>
+</tbody>
+</table>
+<ol start="3" style="list-style-type: decimal">
+<li>Ordinary kriging</li>
+</ol>
+<p>Ordinary kriging to estimate the environmental exposure can be realised by the function <code>exposure_estimate_krige</code>. Generally, you should define the semivariogram firstly.</p>
+<pre><code>example.date &lt;- range(pollutant_data_tem$date)[2]
+test.pollutant &lt;- filter(pollutant_data_tem,date == example.date)[,c(2,5)]
+test.pollutant &lt;- merge(test.pollutant,site_data,by.x = &quot;site.name&quot;,by.y = &quot;site&quot;)
+coordinates(test.pollutant) &lt;- ~lat + lon
+m &lt;- fit.variogram(variogram(PM10~1, test.pollutant), vgm(1, &quot;Sph&quot;, 200, 1))
+
+estimate.krige &lt;- exposure_estimate_krige(individual_data = individual_data_tem,
+                                     individual_id = &quot;id&quot;,
+                                     exposure_date = &quot;date&quot;,
+                                     individual_lat = &quot;lat&quot;,
+                                     individual_lon = &quot;lon&quot;,
+                                     pollutant_data = pollutant_data_tem_idw,
+                                     pollutant_date = &quot;date&quot;,
+                                     pollutant_site_lat = &quot;lat&quot;,
+                                     pollutant_site_lon = &quot;lon&quot;,
+                                     pollutant_name = c(&quot;PM10&quot;,&quot;SO2&quot;),
+                                     estimate_interval = c(0:1),
+                                     krige_model = m,
+                                     nmax = 7,
+                                     krige_method = &quot;med&quot;)
+
+
+kable(head(estimate.krige$PM10),digits = 1)   #### PM10 estimation</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">
+id
+</th>
+<th align="right">
+day.0
+</th>
+<th align="right">
+day.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">
+2564
+</td>
+<td align="right">
+194
+</td>
+<td align="right">
+198
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2563
+</td>
+<td align="right">
+220
+</td>
+<td align="right">
+198
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2562
+</td>
+<td align="right">
+220
+</td>
+<td align="right">
+194
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2561
+</td>
+<td align="right">
+192
+</td>
+<td align="right">
+220
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2560
+</td>
+<td align="right">
+136
+</td>
+<td align="right">
+178
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2559
+</td>
+<td align="right">
+136
+</td>
+<td align="right">
+178
+</td>
+</tr>
+</tbody>
+</table>
+<pre><code>kable(head(estimate.krige$SO2),digits = 1)   #### SO2 estimation</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">
+id
+</th>
+<th align="right">
+day.0
+</th>
+<th align="right">
+day.1
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">
+2564
+</td>
+<td align="right">
+58.0
+</td>
+<td align="right">
+35.0
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2563
+</td>
+<td align="right">
+82.0
+</td>
+<td align="right">
+58.0
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2562
+</td>
+<td align="right">
+80.0
+</td>
+<td align="right">
+58.0
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2561
+</td>
+<td align="right">
+46.7
+</td>
+<td align="right">
+82.0
+</td>
+</tr>
+<tr class="odd">
+<td align="right">
+2560
+</td>
+<td align="right">
+52.0
+</td>
+<td align="right">
+46.7
+</td>
+</tr>
+<tr class="even">
+<td align="right">
+2559
+</td>
+<td align="right">
+52.0
+</td>
+<td align="right">
+46.7
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="references" class="section level3">
+<h3>References</h3>
+<p>Li Wu, Lei Jin, Tingming Shi, Bing Zhang, et.al. Association between ambient particulate matter exposure and semen quality in Wuhan, China, Environment International, 98, 2017,219-228.</p>
+<p>Tao Liu, Min Kang, Bing Zhang, et.al. Independent and interactive effects of ambient temperature and absolute humidity on the risks of avian influenza A(H7N9) infection in China. Science of The Total Environment, 2018, 619-620: 1358-1365.</p>
+</div>
+<div id="bugreports" class="section level3">
+<h3>BugReports</h3>
+<p><strong>EnvExpInd</strong> is a package to estimate the environmental exposure on the individual level. If you have found any bugs, please set up an issue <a href="https://github.com/Spatial-R/EnvExpInd/issues">here</a>.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
